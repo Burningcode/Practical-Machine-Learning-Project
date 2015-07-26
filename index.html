@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-dark.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+
+    <title>Practical-machine-learning-project by Burningcode</title>
+  </head>
+
+  <body>
+
+    <header>
+      <div class="container">
+        <h1>Practical-machine-learning-project</h1>
+        <h2>Cousera Project </h2>
+
+        <section id="downloads">
+          <a href="https://github.com/Burningcode/Practical-Machine-Learning-Project/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/Burningcode/Practical-Machine-Learning-Project/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/Burningcode/Practical-Machine-Learning-Project" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+        </section>
+      </div>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+        <p>&lt;!DOCTYPE html&gt;</p>
+
+<p></p>
+
+<p></p>
+
+<p>
+
+</p>
+
+<p></p>
+
+<p></p>
+
+<p></p>Practical Machine Learning Course Project
+
+
+
+<p>
+</p>
+
+
+
+
+
+
+
+code{white-space: pre;}
+
+<p></p>
+
+
+
+
+  pre:not([class]) {
+    background-color: white;
+  }
+
+
+
+
+<p></p>
+
+<p></p>
+
+
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img { 
+  max-width:100%; 
+  height: auto; 
+}
+
+
+<div>
+
+
+<div id="header">
+<h1>
+<a id="practical-machine-learning-course-project" class="anchor" href="#practical-machine-learning-course-project" aria-hidden="true"><span class="octicon octicon-link"></span></a>Practical Machine Learning Course Project</h1>
+<h4>
+<a id="clay-burns" class="anchor" href="#clay-burns" aria-hidden="true"><span class="octicon octicon-link"></span></a><em>Clay Burns</em>
+</h4>
+<h4>
+<a id="july-23-2015" class="anchor" href="#july-23-2015" aria-hidden="true"><span class="octicon octicon-link"></span></a><em>July 23, 2015</em>
+</h4>
+</div>
+
+<div id="overview">
+<h1>
+<a id="overview" class="anchor" href="#overview" aria-hidden="true"><span class="octicon octicon-link"></span></a>Overview</h1>
+<p>This is a report for the Machine Learning Course offered by John Hopkins on Coursera. This report describes data processing and model building in steps performed on the Data Classification of Body Postures and Movements dataset. More information can be found here, <a href="http://groupware.les.inf.puc-rio.br/har">http://groupware.les.inf.puc-rio.br/har</a></p>
+<p>In brief terms the aim is to build a prediction model that can predict the technique of someone lifting weights based on data from a Fitbit. This model is both Train and tested.</p>
+</div>
+
+<div id="data-acquisition">
+<h1>
+<a id="data-acquisition" class="anchor" href="#data-acquisition" aria-hidden="true"><span class="octicon octicon-link"></span></a>Data Acquisition</h1>
+<div id="loading-data">
+<h2>
+<a id="loading-data" class="anchor" href="#loading-data" aria-hidden="true"><span class="octicon octicon-link"></span></a>Loading Data</h2>
+<p>The training and testing data can be read from these sources.</p>
+<pre><code>url1 &lt;- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+download.file(url1, destfile="pml-training.csv")
+url2 &lt;- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+download.file(url2, destfile="pml-testing.csv")
+dataTrain &lt;- read.csv("pml-training.csv", header=TRUE)
+dataTest &lt;- read.csv("pml-testing.csv", header=TRUE)</code></pre>
+<p>The dataTest set will be used to examine accuracy while exploration and analysis are performed on the dataTrain set.</p>
+</div>
+
+<div id="data-summmary">
+<h2>
+<a id="data-summmary" class="anchor" href="#data-summmary" aria-hidden="true"><span class="octicon octicon-link"></span></a>Data Summmary</h2>
+<pre><code>summary(dataTrain$var_accel_forearm)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
+##   0.000   6.759  21.160  33.500  51.240 172.600   19216</code></pre>
+<pre><code>summary(dataTrain$var_accel_dumbbell)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
+##   0.000   0.378   1.000   4.388   3.434 230.400   19216</code></pre>
+<pre><code>summary(dataTrain$var_yaw_arm)</code></pre>
+<pre><code>##      Min.   1st Qu.    Median      Mean   3rd Qu.      Max.      NA's 
+##     0.000     6.642   278.300  1056.000  1295.000 31340.000     19216</code></pre>
+<p>As can be seen above, many pieces of this data included NA variable in large amounts. For this reason, some data tidying will need to occur before proper model testing..</p>
+</div>
+
+<div id="data-cleaning">
+<h2>
+<a id="data-cleaning" class="anchor" href="#data-cleaning" aria-hidden="true"><span class="octicon octicon-link"></span></a>Data Cleaning</h2>
+<pre><code>dataTidy &lt;- dataTrain[,-c(grep("^amplitude|^kurtosis|^skewness|^avg|^cvtd_timestamp|^max|^min|^new_window|^raw_timestamp|^stddev|^var|^user_name|X",names(dataTrain)))]
+
+paste("Complete Cases:")</code></pre>
+<pre><code>## [1] "Complete Cases:"</code></pre>
+<pre><code>table(complete.cases(dataTidy))</code></pre>
+<pre><code>## 
+##  TRUE 
+## 19622</code></pre>
+<p>After some data tidying, we now have only complete cases.</p>
+</div>
+
+<p></p>
+</div>
+
+<div id="packages-preparation">
+<h1>
+<a id="packages-preparation" class="anchor" href="#packages-preparation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Packages Preparation</h1>
+<p>For the model generation we will need the following packages.</p>
+<pre><code>library(caret)</code></pre>
+<pre><code>## Loading required package: lattice
+## Loading required package: ggplot2</code></pre>
+<pre><code>library(lattice)
+library(gbm)</code></pre>
+<pre><code>## Loading required package: survival
+## 
+## Attaching package: 'survival'
+## 
+## The following object is masked from 'package:caret':
+## 
+##     cluster
+## 
+## Loading required package: splines
+## Loading required package: parallel
+## Loaded gbm 2.1.1</code></pre>
+<p>This will let us test Gradient Boosting versus Random Forest during the analysis. #Data splitting</p>
+<p>Consider the size of the data set we have the ability to split into a secondary set for model validation. The size chosen here was 60% for training, and 40% for a preliminary test.</p>
+<pre><code>set.seed(1337)
+inTrain &lt;- createDataPartition(y=dataTidy$classe,
+                               p=0.6,list=FALSE)
+dataTidyTrain &lt;- dataTidy[inTrain,]
+dataTidyTest &lt;- dataTidy[-inTrain,]</code></pre>
+</div>
+
+<div id="model-selection">
+<h1>
+<a id="model-selection" class="anchor" href="#model-selection" aria-hidden="true"><span class="octicon octicon-link"></span></a>Model Selection</h1>
+<p>Since we would like to predict on classification random forests and Gradient Boosting will yield strong results. The rf &amp; gbm algorithm should suit the data.</p>
+<p>To handle selection the Kappa metric should provide a non-biased measure of prediction.</p>
+<p>Lasting a 10-fold cross validation will reduce the possibility of over fitting.</p>
+<pre><code>set.seed(1337)
+# k-fold validation - 10-fold validation, use kappa as metric
+fitControl &lt;- trainControl(method = "cv",
+                           number = 10)
+gbmFit &lt;- train(classe~., data=dataTidyTrain, method="gbm", metric="Kappa", trControl=fitControl,verbose=FALSE)</code></pre>
+<pre><code>## Loading required package: plyr</code></pre>
+<pre><code>rfFit &lt;- train(classe~.,data=dataTidyTrain,method="rf", metric="Kappa", trControl=fitControl)</code></pre>
+<pre><code>## Loading required package: randomForest
+## randomForest 4.6-10
+## Type rfNews() to see new features/changes/bug fixes.</code></pre>
+</div>
+
+<div id="model-comparison">
+<h1>
+<a id="model-comparison" class="anchor" href="#model-comparison" aria-hidden="true"><span class="octicon octicon-link"></span></a>Model Comparison</h1>
+<p>Below, I create a box plot to examine the Kappa of each model. The Random Forest model produces stronger results, while the Gradient Boosting has a larger spread and seems to require more computational power.</p>
+<pre><code>rValues &lt;- resamples(list(rf=rfFit,gbm=gbmFit))
+summary(rValues)</code></pre>
+<pre><code>## 
+## Call:
+## summary.resamples(object = rValues)
+## 
+## Models: rf, gbm 
+## Number of resamples: 10 
+## 
+## Accuracy 
+##       Min. 1st Qu. Median   Mean 3rd Qu.   Max. NA's
+## rf  0.9915  0.9941 0.9962 0.9958  0.9972 0.9992    0
+## gbm 0.9796  0.9854 0.9877 0.9872  0.9896 0.9915    0
+## 
+## Kappa 
+##       Min. 1st Qu. Median   Mean 3rd Qu.   Max. NA's
+## rf  0.9893  0.9925 0.9952 0.9946  0.9965 0.9989    0
+## gbm 0.9742  0.9815 0.9844 0.9838  0.9868 0.9892    0</code></pre>
+<pre><code>bwplot(rValues,metric="Kappa",main="RandomForest (rf) vs Gradient Boosting (gbm)")</code></pre>
+<p><img title alt width="672"></p>
+</div>
+
+<div id="model-validation">
+<h1>
+<a id="model-validation" class="anchor" href="#model-validation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Model Validation</h1>
+<p>Now with the Random Forest we can proceed to examine how well the Model fits on the dataTidyTest set. I have also included the detail of the selected model.</p>
+<pre><code>rfFit</code></pre>
+<pre><code>## Random Forest 
+## 
+## 11776 samples
+##    53 predictor
+##     5 classes: 'A', 'B', 'C', 'D', 'E' 
+## 
+## No pre-processing
+## Resampling: Cross-Validated (10 fold) 
+## 
+## Summary of sample sizes: 10598, 10597, 10598, 10599, 10599, 10599, ... 
+## 
+## Resampling results across tuning parameters:
+## 
+##   mtry  Accuracy   Kappa      Accuracy SD  Kappa SD   
+##    2    0.9932067  0.9914063  0.002499116  0.003162345
+##   27    0.9957547  0.9946295  0.002333337  0.002952599
+##   53    0.9933769  0.9916217  0.003146440  0.003981623
+## 
+## Kappa was used to select the optimal model using  the largest value.
+## The final value used for the model was mtry = 27.</code></pre>
+<p>The caret confusionMatrix function can help validate the selected model. It can be determined that models still performs within its initial kappa bounds with an extremely high accuracy.</p>
+<pre><code>confusionMatrix(dataTidyTest$classe, predict(rfFit,dataTidyTest))</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    A    B    C    D    E
+##          A 2232    0    0    0    0
+##          B    8 1507    3    0    0
+##          C    0    5 1362    1    0
+##          D    0    0   13 1273    0
+##          E    0    0    2    3 1437
+## 
+## Overall Statistics
+##                                           
+##                Accuracy : 0.9955          
+##                  95% CI : (0.9938, 0.9969)
+##     No Information Rate : 0.2855          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
+##                                           
+##                   Kappa : 0.9944          
+##  Mcnemar's Test P-Value : NA              
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity            0.9964   0.9967   0.9870   0.9969   1.0000
+## Specificity            1.0000   0.9983   0.9991   0.9980   0.9992
+## Pos Pred Value         1.0000   0.9928   0.9956   0.9899   0.9965
+## Neg Pred Value         0.9986   0.9992   0.9972   0.9994   1.0000
+## Prevalence             0.2855   0.1927   0.1759   0.1628   0.1832
+## Detection Rate         0.2845   0.1921   0.1736   0.1622   0.1832
+## Detection Prevalence   0.2845   0.1935   0.1744   0.1639   0.1838
+## Balanced Accuracy      0.9982   0.9975   0.9930   0.9974   0.9996</code></pre>
+</div>
+
+<div id="final-model-testing">
+<h1>
+<a id="final-model-testing" class="anchor" href="#final-model-testing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Final Model Testing</h1>
+<p>Final we will use the model to write the results on the test set, as instructed, for a final test.</p>
+<pre><code>results &lt;- predict(rfFit,newdata=dataTest)
+print(as.data.frame(results))</code></pre>
+<pre><code>##    results
+## 1        B
+## 2        A
+## 3        B
+## 4        A
+## 5        A
+## 6        E
+## 7        D
+## 8        B
+## 9        A
+## 10       A
+## 11       B
+## 12       C
+## 13       B
+## 14       A
+## 15       E
+## 16       E
+## 17       A
+## 18       B
+## 19       B
+## 20       B</code></pre>
+<pre><code>pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+pml_write_files(results)</code></pre>
+</div>
+
+<p></p>
+</div>
+
+
+
+
+
+
+
+<p>
+</p>
+      </section>
+    </div>
+
+    
+  </body>
+</html>
